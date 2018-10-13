@@ -1,0 +1,37 @@
+---
+# This playbook will install mysql and create db user and give permissions.
+# Cambio del instalador de paquetes yum a apt
+- name: Install Mysql package
+  apt: name={{ item }} state=installed
+  with_items:
+   - mysql-server
+   - python-mysqldb
+#python-mysqldb es una alternativa al paquete MySQL-python debido a que causaba errores.
+#   - MySQL-python
+#   - libselinux-python
+#   - libsemanage-python
+
+- name: Create Mysql configuration file
+  template: src=my.cnf.j2 dest=~/.my.cnf
+  notify:
+  - restart mysql
+
+#- name: Configure SELinux to start mysql on any port
+#  seboolean: name=mysql_connect_any state=true persistent=yes
+#  when: sestatus.rc != 0
+
+#Cambio de mysqld por mysql
+- name: Start Mysql Service
+  service: name=mysql state=started enabled=yes
+
+#Cambio de la direccion dest=/etc/sysconfig/iptables por dest=/etc/networks
+- name: insert iptables rule
+  lineinfile: dest=/etc/networks state=present regexp="{{ mysql_port }}"
+              insertafter="^:OUTPUT " line="-A INPUT -p tcp  --dport {{ mysql_port }} -j  ACCEPT"
+  notify: restart iptables
+
+- name: Create Application Database
+  mysql_db: name={{ dbname }} state=present
+
+- name: Create Application DB User
+  mysql_user: name={{ dbuser }} password={{ upassword }} priv=*.*:ALL host='%' state=present

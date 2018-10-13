@@ -1,0 +1,6 @@
+# Se reutilizaron los servidores creados en ansible000 por lo tanto se realiza el cambio por los hosts respectivos
+[webservers]
+server01 ansible_port=2221 ansible_ssh_private_key_file=./key.private
+
+[dbservers]
+server02 ansible_port=2222 ansible_ssh_private_key_file=./key.private
